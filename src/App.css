@@ -5,38 +5,128 @@
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.battle-cards-row {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 24px;
+  transition: opacity 0.5s;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.battle-results-row {
+  display: flex;
+  justify-content: center;
+  min-height: 60px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.pokemon-name {
+  color: #000000;
 }
 
-.card {
-  padding: 2em;
+.pokemon-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08), 0 1.5px 4px rgba(0, 0, 0, 0.04);
+  padding: 24px 20px 18px 20px;
+  min-width: 220px;
+  max-width: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: box-shadow 0.2s, transform 0.2s;
 }
 
-.read-the-docs {
-  color: #888;
+.pokemon-card:hover {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.13), 0 2px 8px rgba(0, 0, 0, 0.07);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.pokemon-card ul {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin: 10px 0 14px 0;
+  width: 100%;
+  text-align: left;
+}
+
+.pokemon-card li {
+  margin-bottom: 2px;
+  font-size: 0.97em;
+  color: #444;
+}
+
+.pokemon-card button {
+  margin: 10px 0 12px 0;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: none;
+  background: #2196f3;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.pokemon-card button:disabled,
+.pokemon-card button[style*="opacity: 0.5"] {
+  background: #b0bec5;
+  cursor: not-allowed;
+}
+
+.pokemon-card button:hover:not(:disabled) {
+  background: #1769aa;
+}
+
+.vote-bar {
+  width: 100%;
+  margin-top: 8px;
+  background: #e3eaf2;
+  border-radius: 8px;
+  min-height: 32px;
+  position: relative;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+}
+
+.vote-bar .bar {
+  height: 100%;
+  border-radius: 8px 0 0 8px;
+  transition: width 0.5s cubic-bezier(0.4, 2, 0.6, 1), background 0.2s;
+}
+
+.vote-bar span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.98em;
+  color: #222;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: unset;
+  max-width: 90%;
+  text-align: center;
+  pointer-events: none;
+}
+
+.results {
+  background: #f7fafd;
+  border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(33, 150, 243, 0.07);
+  color: #000000;
+  padding: 18px 32px;
+  margin-top: 0;
+  min-width: 220px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s, transform 0.5s;
+}
+
+.results.results-visible {
+  opacity: 1;
+  transform: translateY(0);
 }

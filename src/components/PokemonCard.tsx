@@ -1,18 +1,6 @@
 import React from "react";
-
-type PokemonCardProps = {
-  poke: any;
-  votes: number;
-  totalVotes: number;
-  winner: string | null;
-  voted: string | null;
-  onVote: (pokemon: string) => void;
-};
-
-function percent(part: number, total: number) {
-  if (total === 0) return "0%";
-  return ((part / total) * 100).toFixed(1) + "%";
-}
+import { type PokemonCardProps } from "../static/types";
+import { percent } from "../static/numbers";
 
 const PokemonCard: React.FC<PokemonCardProps> = ({
   poke,
@@ -24,20 +12,24 @@ const PokemonCard: React.FC<PokemonCardProps> = ({
 }) => {
   return (
     <div className={`pokemon-card${winner === poke.name ? " winner" : ""}`}>
-      <h2>{poke.name.charAt(0).toUpperCase() + poke.name.slice(1)}</h2>
+      <h2 className="pokemon-name">
+        {poke.name.charAt(0).toUpperCase() + poke.name.slice(1)}
+      </h2>
+
       <img
         src={poke.sprites.front_default}
         alt={poke.name}
         width={96}
         height={96}
       />
+
       <ul>
         <li>Weight: {poke.weight}</li>
         <li>Height: {poke.height}</li>
         <li>Base Exp: {poke.base_experience}</li>
       </ul>
+
       <button
-        disabled={!!voted}
         onClick={() => onVote(poke.name)}
         style={{ opacity: voted ? 0.5 : 1 }}
       >
@@ -47,6 +39,7 @@ const PokemonCard: React.FC<PokemonCardProps> = ({
               poke.name.charAt(0).toUpperCase() + poke.name.slice(1)
             }`}
       </button>
+
       <div className="vote-bar">
         <div
           className="bar"

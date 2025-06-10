@@ -1,11 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import PokemonCard from "../components/PokemonCard";
 import Results from "../components/Results";
-import {
-  POKE_API,
-  CHANNEL_NAME,
-  getRandomBattlePokemon,
-} from "../static/consts/consts";
+import { POKE_API, CHANNEL_NAME } from "../static/consts/consts";
+import { getRandomBattlePokemon } from "../static/numbers";
 
 // localStorage key for voting matchup
 function getMatchupKey(poke1: string, poke2: string) {
@@ -20,14 +17,23 @@ export default function Battle() {
   const [votes, setVotes] = useState<{ [key: string]: number }>({});
   const [voted, setVoted] = useState<string | null>(null);
   const [matchupKey, setMatchupKey] = useState<string>("");
+  const [reVoteWarning, setReVoteWarning] = useState(false);
   const channelRef = useRef<BroadcastChannel | null>(null);
 
   // matchup handler
   const startNewBattle = () => {
-    const choices = getRandomBattlePokemon();
-    setPokemonChoices(choices);
+    let choices, sortedNames, key;
+    let attempts = 0;
 
-    const key = getMatchupKey(choices[0].name, choices[1].name);
+    do {
+      choices = getRandomBattlePokemon();
+      sortedNames = [choices[0].name, choices[1].name].sort();
+      key = getMatchupKey(sortedNames[0], sortedNames[1]);
+      attempts++;
+    } while (key === matchupKey && attempts < 10);
+
+    // sort matchup to account for reversed order
+    setPokemonChoices(choices);
     setMatchupKey(key);
 
     // grab existing votes if exists
@@ -35,10 +41,14 @@ export default function Battle() {
 
     if (stored) {
       try {
+        // map votes for display order
         const parsed = JSON.parse(stored);
-        setVotes(
-          parsed.votes || { [choices[0].name]: 0, [choices[1].name]: 0 }
-        );
+        const votesObj = {
+          [choices[0].name]: parsed.votes[choices[0].name] || 0,
+          [choices[1].name]: parsed.votes[choices[1].name] || 0,
+        };
+
+        setVotes(votesObj);
         setVoted(parsed.voted || null);
       } catch {
         setVotes({ [choices[0].name]: 0, [choices[1].name]: 0 });
@@ -48,6 +58,8 @@ export default function Battle() {
       setVotes({ [choices[0].name]: 0, [choices[1].name]: 0 });
       setVoted(null);
     }
+
+    setReVoteWarning(false);
     setLoading(true);
   };
 
@@ -59,7 +71,9 @@ export default function Battle() {
   // hit api
   useEffect(() => {
     if (pokemonChoices.length !== 2) return;
+
     setLoading(true);
+
     Promise.all(
       pokemonChoices.map((p) =>
         fetch(POKE_API + p.name).then((res) => {
@@ -81,18 +95,25 @@ export default function Battle() {
   // localStorage vote storage
   useEffect(() => {
     if (pokemonChoices.length !== 2) return;
-    const key = getMatchupKey(pokemonChoices[0].name, pokemonChoices[1].name);
+
+    // sort matchup
+    const sortedNames = [pokemonChoices[0].name, pokemonChoices[1].name].sort();
+    const key = getMatchupKey(sortedNames[0], sortedNames[1]);
+
     setMatchupKey(key);
+
     const stored = localStorage.getItem(key);
+
     if (stored) {
       try {
+        // map votes for display order
         const parsed = JSON.parse(stored);
-        setVotes(
-          parsed.votes || {
-            [pokemonChoices[0].name]: 0,
-            [pokemonChoices[1].name]: 0,
-          }
-        );
+        const votesObj = {
+          [pokemonChoices[0].name]: parsed.votes[pokemonChoices[0].name] || 0,
+          [pokemonChoices[1].name]: parsed.votes[pokemonChoices[1].name] || 0,
+        };
+
+        setVotes(votesObj);
         setVoted(parsed.voted || null);
       } catch {
         setVotes({ [pokemonChoices[0].name]: 0, [pokemonChoices[1].name]: 0 });
@@ -108,6 +129,7 @@ export default function Battle() {
   useEffect(() => {
     const channel = new BroadcastChannel(CHANNEL_NAME);
     channelRef.current = channel;
+
     channel.onmessage = (event) => {
       if (event.data.type === "votes-update") {
         setVotes(event.data.votes);
@@ -115,7 +137,9 @@ export default function Battle() {
         channel.postMessage({ type: "votes-update", votes });
       }
     };
+
     channel.postMessage({ type: "sync-request" });
+
     return () => channel.close();
   }, [pokemonChoices]);
 
@@ -128,22 +152,36 @@ export default function Battle() {
 
   // handle votes
   const handleVote = (pokemon: string) => {
-    if (voted || !matchupKey) return;
+    if (voted || !matchupKey) {
+      setReVoteWarning(true);
+      return;
+    }
+
     const newVotes = { ...votes, [pokemon]: (votes[pokemon] || 0) + 1 };
     setVotes(newVotes);
     setVoted(pokemon);
+
+    // sort matchup to save votes
+    const sortedNames = [pokemonChoices[0].name, pokemonChoices[1].name].sort();
+    const key = getMatchupKey(sortedNames[0], sortedNames[1]);
+    const votesToStore = {
+      [sortedNames[0]]: newVotes[sortedNames[0]] || 0,
+      [sortedNames[1]]: newVotes[sortedNames[1]] || 0,
+    };
+
     localStorage.setItem(
-      matchupKey,
-      JSON.stringify({ voted: pokemon, votes: newVotes })
+      key,
+      JSON.stringify({ voted: pokemon, votes: votesToStore })
     );
-    if (channelRef.current) {
+
+    if (channelRef.current)
       channelRef.current.postMessage({ type: "votes-update", votes: newVotes });
-    }
   };
 
   // ui update for winner
   const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0);
   let winner: string | null = null;
+
   if (
     pokemonChoices.length === 2 &&
     votes[pokemonChoices[0].name] > votes[pokemonChoices[1].name]
@@ -163,7 +201,14 @@ export default function Battle() {
       <button onClick={startNewBattle} style={{ marginBottom: 16 }}>
         New Battle
       </button>
-      <div className="battle">
+
+      {reVoteWarning && (
+        <div style={{ color: "orange", marginBottom: 8 }}>
+          You have already voted for this matchup. Re-voting is not allowed.
+        </div>
+      )}
+
+      <div className="battle-cards-row">
         {pokemonData.map((poke: any) => (
           <PokemonCard
             key={poke.id}
@@ -176,7 +221,10 @@ export default function Battle() {
           />
         ))}
       </div>
-      {voted && <Results votes={votes} winner={winner} />}
+
+      <div className="battle-results-row">
+        {voted && <Results votes={votes} winner={winner} />}
+      </div>
     </>
   );
 }
