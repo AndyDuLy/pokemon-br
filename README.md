@@ -1,5 +1,20 @@
 # React + TypeScript + Vite
 
+## Running & Local Test
+
+git clone
+cd pokemon-br
+npm install
+npm run test
+
+live at:
+localhost:5173
+
+localStorage changes and state can be monitored and interacted with in chrome devtools (tab 'application')
+
+
+## Vite starter information
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
