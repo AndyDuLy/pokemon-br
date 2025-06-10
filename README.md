@@ -2,12 +2,12 @@
 
 ## Running & Local Test
 
-git clone
-cd pokemon-br
-npm install
-npm run test
+git clone <br>
+cd pokemon-br <br>
+npm install <br>
+npm run test <br>
 
-live at:
+live at: <br>
 localhost:5173
 
 localStorage changes and state can be monitored and interacted with in chrome devtools (tab 'application')
